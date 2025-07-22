@@ -91,7 +91,8 @@ export default function SMARTCalculationPage() {
     setShowAddCriteria(true)
     setFormError("")
   }
-  const openEditCriteria = (c: Criteria) => {
+  const openEditCriteria = (id: string, updates: Partial<Criteria>) => {
+    const c = updates as Criteria  // The component passes the full criteria object as updates
     setEditCriteria(c)
     setCriteriaName(c.name)
     setCriteriaWeight(c.weight)
@@ -105,7 +106,8 @@ export default function SMARTCalculationPage() {
     setShowAddCandidate(true)
     setFormError("")
   }
-  const openEditCandidate = (c: Candidate) => {
+  const openEditCandidate = (id: string, updates: Partial<Candidate>) => {
+    const c = updates as Candidate  // The component passes the full candidate object as updates
     setEditCandidate(c)
     setCandidateName(c.name)
     setShowAddCandidate(true)
