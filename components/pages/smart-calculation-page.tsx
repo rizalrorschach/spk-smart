@@ -193,30 +193,41 @@ export default function SMARTCalculationPage() {
     : {}
 
   return (
-    <div className="p-6">
+    <div className="p-4 lg:p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Perhitungan Metode SMART</h1>
-          <p className="text-slate-600 mt-1">
-            Proses perhitungan untuk pemilihan karyawan terbaik menggunakan metode SMART
-          </p>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <Calculator className="w-6 h-6 text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Perhitungan Metode SMART</h1>
+            <p className="text-gray-600 mt-1 text-sm lg:text-base">
+              Proses perhitungan untuk pemilihan karyawan terbaik
+            </p>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={openAddCriteria}>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto lg:w-auto">
+          <Button 
+            className="bg-green-600 hover:bg-green-700 text-white order-2 sm:order-1" 
+            onClick={openAddCriteria}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Tambah Kriteria
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={openAddCandidate}>
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700 text-white order-1 sm:order-2" 
+            onClick={openAddCandidate}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Tambah Kandidat
           </Button>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Left Section: Criteria Weights & Scoring Form */}
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* Criteria and Candidates Section */}
+        <div className="space-y-6 order-2 xl:order-1">
           <CriteriaWeightCard
             criteria={criteria}
             onWeightChange={handleWeightChange}
@@ -234,50 +245,86 @@ export default function SMARTCalculationPage() {
           />
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={calculateSMART} className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Calculator className="w-4 h-4 mr-2" />
-              Hitung
-            </Button>
-            <Button variant="outline" onClick={resetCalculation}>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reset
-            </Button>
+          <div className="bg-white p-4 rounded-lg border shadow-sm">
+            <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+              <Calculator className="w-4 h-4 text-blue-600" />
+              Aksi Perhitungan
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Button 
+                onClick={calculateSMART} 
+                className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+              >
+                <Calculator className="w-4 h-4 mr-2" />
+                Hitung SMART
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={resetCalculation}
+                className="w-full"
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Reset
+              </Button>
+            </div>
+            
             {isCalculated && (
-              <>
-                <Button onClick={saveToDatabase} className="bg-green-600 hover:bg-green-700 text-white">
-                  <Save className="w-4 h-4 mr-2" />
-                  Simpan ke Database
-                </Button>
-                <Button variant="outline" onClick={handleExportPDF}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download PDF
-                </Button>
-                <Button variant="outline" onClick={handleExportExcel}>
-                  <FileSpreadsheet className="w-4 h-4 mr-2" />
-                  Export Excel
-                </Button>
-              </>
+              <div className="mt-4 pt-4 border-t space-y-3">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Ekspor Hasil</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <Button 
+                    onClick={saveToDatabase} 
+                    className="bg-green-600 hover:bg-green-700 text-white text-sm"
+                    size="sm"
+                  >
+                    <Save className="w-4 h-4 mr-1" />
+                    Simpan
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleExportPDF}
+                    className="text-sm"
+                    size="sm"
+                  >
+                    <Download className="w-4 h-4 mr-1" />
+                    PDF
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleExportExcel}
+                    className="text-sm"
+                    size="sm"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 mr-1" />
+                    Excel
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Right Section: Results */}
-        <div className="space-y-6">
+        {/* Results Section */}
+        <div className="space-y-6 order-1 xl:order-2">
           <ResultsTable criteria={criteria} calculatedCandidates={calculatedCandidates} isCalculated={isCalculated} />
         </div>
       </div>
-      <div className="mt-10">
-        <button
-          className="text-blue-600 hover:underline mb-2"
+      {/* Past Results Section */}
+      <div className="bg-white p-4 lg:p-6 rounded-lg border shadow-sm">
+        <Button
+          variant="ghost"
           onClick={() => setShowPastResults((v) => !v)}
+          className="p-0 h-auto text-blue-600 hover:text-blue-700 hover:bg-transparent mb-4"
         >
           {showPastResults ? "Sembunyikan" : "Tampilkan"} Riwayat Hasil Perhitungan
-        </button>
+        </Button>
         {showPastResults && (
-          <div className="bg-white rounded shadow p-4">
+          <div className="mt-4">
             {Object.keys(groupedResults).length === 0 && (
-              <div className="text-slate-500">Belum ada riwayat hasil perhitungan.</div>
+              <div className="text-center py-8 text-gray-500">
+                <Calculator className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Belum ada riwayat hasil perhitungan.</p>
+              </div>
             )}
             {Object.entries(groupedResults).map(([groupId, results]) => {
               const sorted = results.slice().sort((a, b) => a.rank - b.rank)

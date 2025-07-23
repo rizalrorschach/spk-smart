@@ -1,8 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
-import { v4 as uuidv4 } from 'uuid'
+import { v4 as uuidv4 } from "uuid"
+
+interface Criteria {
+  id: string
+  name: string
+  weight: number
+  type: "benefit" | "cost"
+}
 
 interface Candidate {
   id: string
@@ -10,13 +17,6 @@ interface Candidate {
   scores: { [criteriaId: string]: number }
   utilityScore: number
   rank: number
-}
-
-interface Criteria {
-  id: string
-  name: string
-  weight: number
-  type: "benefit" | "cost"
 }
 
 export function useSMARTCalculation() {
@@ -27,148 +27,127 @@ export function useSMARTCalculation() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [pastResults, setPastResults] = useState<any[]>([])
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
-  // Fetch criteria and candidates from Supabase
+  // Get current user ID
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true)
-      setError("")
-      // Fetch criteria
-      const { data: criteriaData, error: criteriaError } = await supabase
-        .from("criteria")
-        .select("id, name, weight, type")
-        .order("created_at", { ascending: true })
-      // Fetch candidates
-      const { data: candidateData, error: candidateError } = await supabase
-        .from("candidates")
-        .select("id, name")
-        .order("created_at", { ascending: true })
-      // Fetch scores
-      const { data: scoresData, error: scoresError } = await supabase
-        .from("scores")
-        .select("id, candidate_id, criteria_id, score")
-      if (criteriaError || candidateError || scoresError) {
-        setError(
-          criteriaError?.message || candidateError?.message || scoresError?.message || "Unknown error"
-        )
-        setLoading(false)
-        return
-      }
-      // Map scores to candidates
-      const safeCriteria = Array.isArray(criteriaData) ? criteriaData : []
-      const safeCandidates = Array.isArray(candidateData) ? candidateData : []
-      const safeScores = Array.isArray(scoresData) ? scoresData : []
-      const candidatesWithScores: Candidate[] = safeCandidates.map((candidate) => {
-        const scores: { [criteriaId: string]: number } = {}
-        safeCriteria.forEach((c: Criteria) => {
-          const scoreObj = safeScores.find(
-            (s) => s.candidate_id === candidate.id && s.criteria_id === c.id
-          )
-          scores[c.id] = scoreObj ? scoreObj.score : 0
-        })
-        return {
-          id: candidate.id,
-          name: candidate.name,
-          scores,
-          utilityScore: 0,
-          rank: 0,
-        }
-      })
-      setCriteriaList(safeCriteria)
-      setCandidates(candidatesWithScores)
-      setLoading(false)
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setCurrentUserId(user?.id || null)
     }
-    fetchData()
+    getCurrentUser()
   }, [])
 
-  // CRUD for Criteria
-  const addCriteria = async (name: string, weight: number, type: "benefit" | "cost") => {
-    const { data, error } = await supabase
-      .from("criteria")
-      .insert([{ name, weight, type }])
-      .select()
-      .single()
-    if (error) throw error
-    setCriteriaList((prev) => [...prev, data])
-  }
-  const updateCriteria = async (id: string, updates: Partial<Criteria>) => {
-    const { data, error } = await supabase
-      .from("criteria")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single()
-    if (error) throw error
-    setCriteriaList((prev) => prev.map((c) => (c.id === id ? { ...c, ...data } : c)))
-  }
-  const deleteCriteria = async (id: string) => {
-    const { error } = await supabase.from("criteria").delete().eq("id", id)
-    if (error) throw error
-    setCriteriaList((prev) => prev.filter((c) => c.id !== id))
-  }
+  // Fetch criteria and candidates from Supabase with user filtering
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!currentUserId) return
+      
+      setLoading(true)
+      setError("")
+      
+      try {
+        // Fetch criteria for current user
+        const { data: criteriaData, error: criteriaError } = await supabase
+          .from("criteria")
+          .select("id, name, weight, type")
+          .eq("user_id", currentUserId)
+          .order("created_at", { ascending: true })
 
-  // CRUD for Candidates
-  const addCandidate = async (name: string) => {
-    const { data, error } = await supabase
-      .from("candidates")
-      .insert([{ name }])
-      .select()
-      .single()
-    if (error) throw error
-    // Add default scores for new candidate
-    const scores: { [criteriaId: string]: number } = {}
-    for (let i = 0; i < criteriaList.length; i++) {
-      const c: Criteria = criteriaList[i]
-      scores[c.id] = 0
+        // Fetch candidates for current user
+        const { data: candidateData, error: candidateError } = await supabase
+          .from("candidates")
+          .select("id, name")
+          .eq("user_id", currentUserId)
+          .order("created_at", { ascending: true })
+
+        // Fetch scores for current user
+        const { data: scoresData, error: scoresError } = await supabase
+          .from("scores")
+          .select("id, candidate_id, criteria_id, score")
+          .eq("user_id", currentUserId)
+
+        if (criteriaError) throw criteriaError
+        if (candidateError) throw candidateError
+        if (scoresError) throw scoresError
+
+        // Map scores to candidates
+        const safeCriteria = Array.isArray(criteriaData) ? criteriaData : []
+        const safeCandidates = Array.isArray(candidateData) ? candidateData : []
+        const safeScores = Array.isArray(scoresData) ? scoresData : []
+
+        const candidatesWithScores: Candidate[] = safeCandidates.map((candidate) => {
+          const scores: { [criteriaId: string]: number } = {}
+          safeCriteria.forEach((c: Criteria) => {
+            const scoreObj = safeScores.find(
+              (s) => s.candidate_id === candidate.id && s.criteria_id === c.id
+            )
+            scores[c.id] = scoreObj ? scoreObj.score : 0
+          })
+          return {
+            id: candidate.id,
+            name: candidate.name,
+            scores,
+            utilityScore: 0,
+            rank: 0,
+          }
+        })
+
+        setCriteriaList(safeCriteria)
+        setCandidates(candidatesWithScores)
+      } catch (err) {
+        setError((err as Error).message || "Failed to fetch data")
+      } finally {
+        setLoading(false)
+      }
     }
-    setCandidates((prev) => [...prev, { ...data, scores, utilityScore: 0, rank: 0 }])
-  }
-  const updateCandidate = async (id: string, updates: Partial<Candidate>) => {
-    const { data, error } = await supabase
-      .from("candidates")
-      .update({ name: updates.name })
-      .eq("id", id)
-      .select()
-      .single()
-    if (error) throw error
-    setCandidates((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, ...data, scores: c.scores } : c))
-    )
-  }
-  const deleteCandidate = async (id: string) => {
-    const { error } = await supabase.from("candidates").delete().eq("id", id)
-    if (error) throw error
-    setCandidates((prev) => prev.filter((c) => c.id !== id))
-  }
 
-  // Score update
+    if (currentUserId) {
+      fetchData()
+    }
+  }, [currentUserId])
+
   const handleScoreChange = async (candidateId: string, criteriaId: string, value: string) => {
-    const numValue = Math.max(0, Math.min(100, Number.parseInt(value) || 0))
-    // Update in Supabase
-    const { data, error } = await supabase
-      .from("scores")
-      .upsert({ candidate_id: candidateId, criteria_id: criteriaId, score: numValue }, { onConflict: "candidate_id,criteria_id" })
-      .select()
-      .single()
-    if (error) throw error
-    setCandidates((prev) =>
-      prev.map((candidate) =>
-        candidate.id === candidateId
-          ? { ...candidate, scores: { ...candidate.scores, [criteriaId]: numValue } }
-          : candidate,
-      ),
-    )
+    if (!currentUserId) return
+    
+    const score = parseInt(value) || 0
+    try {
+      const { error } = await supabase
+        .from("scores")
+        .upsert({
+          user_id: currentUserId,
+          candidate_id: candidateId,
+          criteria_id: criteriaId,
+          score: score,
+        })
+      if (error) throw error
+
+      setCandidates((prev) =>
+        prev.map((c) =>
+          c.id === candidateId ? { ...c, scores: { ...c.scores, [criteriaId]: score } } : c
+        )
+      )
+    } catch (err) {
+      console.error("Error updating score:", err)
+    }
   }
 
   const handleWeightChange = async (criteriaId: string, weight: number[]) => {
-    const { data, error } = await supabase
-      .from("criteria")
-      .update({ weight: weight[0] })
-      .eq("id", criteriaId)
-      .select()
-      .single()
-    if (error) throw error
-    setCriteriaList((prev) => prev.map((c) => (c.id === criteriaId ? { ...c, weight: weight[0] } : c)))
+    if (!currentUserId) return
+    
+    try {
+      const { data, error } = await supabase
+        .from("criteria")
+        .update({ weight: weight[0] })
+        .eq("id", criteriaId)
+        .eq("user_id", currentUserId)
+        .select()
+        .single()
+      if (error) throw error
+      setCriteriaList((prev) => prev.map((c) => (c.id === criteriaId ? { ...c, weight: weight[0] } : c)))
+    } catch (err) {
+      console.error("Error updating weight:", err)
+    }
   }
 
   const calculateSMART = () => {
@@ -240,32 +219,176 @@ export function useSMARTCalculation() {
     setCalculatedCandidates([])
   }
 
-  // Save calculation results to Supabase
+  // Save calculation results to Supabase with user isolation
   const saveToDatabase = async () => {
-    if (!isCalculated || calculatedCandidates.length === 0) return
-    const calculationGroupId = uuidv4()
-    const calculationDate = new Date().toISOString()
-    const rows = calculatedCandidates.map((c) => ({
-      candidate_id: c.id,
-      utility_score: c.utilityScore,
-      rank: c.rank,
-      calculation_date: calculationDate,
-      group_id: calculationGroupId,
-    }))
-    const { error } = await supabase.from('calculation_results').insert(rows)
-    if (error) throw error
-    alert('Hasil perhitungan berhasil disimpan!')
-    fetchPastResults()
+    if (!isCalculated || calculatedCandidates.length === 0 || !currentUserId) return
+    
+    try {
+      const calculationGroupId = uuidv4()
+      const calculationDate = new Date().toISOString()
+      const rows = calculatedCandidates.map((c) => ({
+        user_id: currentUserId,
+        candidate_id: c.id,
+        utility_score: c.utilityScore,
+        rank: c.rank,
+        calculation_date: calculationDate,
+        group_id: calculationGroupId,
+      }))
+      
+      const { error } = await supabase.from('calculation_results').insert(rows)
+      if (error) throw error
+      
+      alert('Hasil perhitungan berhasil disimpan!')
+      fetchPastResults()
+    } catch (err) {
+      console.error("Error saving results:", err)
+      alert('Gagal menyimpan hasil perhitungan!')
+    }
   }
 
-  // Fetch past calculation results
+  // Fetch past calculation results for current user
   const fetchPastResults = async () => {
-    const { data, error } = await supabase
-      .from('calculation_results')
-      .select('*')
-      .order('calculation_date', { ascending: false })
-    if (error) throw error
-    setPastResults(data || [])
+    if (!currentUserId) return
+    
+    try {
+      const { data, error } = await supabase
+        .from('calculation_results')
+        .select('*')
+        .eq('user_id', currentUserId)
+        .order('calculation_date', { ascending: false })
+      if (error) throw error
+      setPastResults(data || [])
+    } catch (err) {
+      console.error("Error fetching past results:", err)
+    }
+  }
+
+  // Add criteria with user association
+  const addCriteria = async (name: string, weight: number, type: "benefit" | "cost") => {
+    if (!currentUserId) return
+    
+    try {
+      const { data, error } = await supabase
+        .from("criteria")
+        .insert({
+          user_id: currentUserId,
+          name,
+          weight,
+          type,
+        })
+        .select()
+        .single()
+      if (error) throw error
+      
+      setCriteriaList((prev) => [...prev, data])
+    } catch (err) {
+      throw new Error((err as Error).message || "Failed to add criteria")
+    }
+  }
+
+  // Update criteria (with user verification)
+  const updateCriteria = async (id: string, updates: Partial<Criteria>) => {
+    if (!currentUserId) return
+    
+    try {
+      const { data, error } = await supabase
+        .from("criteria")
+        .update(updates)
+        .eq("id", id)
+        .eq("user_id", currentUserId)
+        .select()
+        .single()
+      if (error) throw error
+      
+      setCriteriaList((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)))
+    } catch (err) {
+      throw new Error((err as Error).message || "Failed to update criteria")
+    }
+  }
+
+  // Delete criteria (with user verification)
+  const deleteCriteria = async (id: string) => {
+    if (!currentUserId) return
+    
+    try {
+      const { error } = await supabase
+        .from("criteria")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", currentUserId)
+      if (error) throw error
+      
+      setCriteriaList((prev) => prev.filter((c) => c.id !== id))
+    } catch (err) {
+      console.error("Error deleting criteria:", err)
+    }
+  }
+
+  // Add candidate with user association
+  const addCandidate = async (name: string) => {
+    if (!currentUserId) return
+    
+    try {
+      const { data, error } = await supabase
+        .from("candidates")
+        .insert({
+          user_id: currentUserId,
+          name,
+        })
+        .select()
+        .single()
+      if (error) throw error
+      
+      const newCandidate: Candidate = {
+        id: data.id,
+        name: data.name,
+        scores: {},
+        utilityScore: 0,
+        rank: 0,
+      }
+      
+      setCandidates((prev) => [...prev, newCandidate])
+    } catch (err) {
+      throw new Error((err as Error).message || "Failed to add candidate")
+    }
+  }
+
+  // Update candidate (with user verification)
+  const updateCandidate = async (id: string, updates: Partial<Candidate>) => {
+    if (!currentUserId) return
+    
+    try {
+      const { data, error } = await supabase
+        .from("candidates")
+        .update(updates)
+        .eq("id", id)
+        .eq("user_id", currentUserId)
+        .select()
+        .single()
+      if (error) throw error
+      
+      setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)))
+    } catch (err) {
+      throw new Error((err as Error).message || "Failed to update candidate")
+    }
+  }
+
+  // Delete candidate (with user verification)
+  const deleteCandidate = async (id: string) => {
+    if (!currentUserId) return
+    
+    try {
+      const { error } = await supabase
+        .from("candidates")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", currentUserId)
+      if (error) throw error
+      
+      setCandidates((prev) => prev.filter((c) => c.id !== id))
+    } catch (err) {
+      console.error("Error deleting candidate:", err)
+    }
   }
 
   return {
@@ -275,6 +398,7 @@ export function useSMARTCalculation() {
     isCalculated,
     loading,
     error,
+    currentUserId,
     handleScoreChange,
     handleWeightChange,
     calculateSMART,
