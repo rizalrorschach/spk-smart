@@ -110,9 +110,9 @@ export function useSMARTCalculation() {
   const handleScoreChange = async (candidateId: string, criteriaId: string, value: string) => {
     if (!currentUserId) return
     
-    // Parse the score more carefully
+    // Parse the score more carefully - allow decimal values
     const numValue = parseFloat(value)
-    const score = isNaN(numValue) ? 0 : Math.min(Math.max(Math.round(numValue), 0), 100)
+    const score = isNaN(numValue) ? 0 : Math.min(Math.max(numValue, 0), 100)
     
     // Update local state immediately for better UX
     setCandidates((prev) =>
