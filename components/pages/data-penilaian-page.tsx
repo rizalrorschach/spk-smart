@@ -67,7 +67,7 @@ export default function DataPenilaianPage() {
     
     calculatedCandidates.forEach((candidate) => {
       yPos += 10
-      doc.text(`${candidate.rank}. ${candidate.name} - ${candidate.utilityScore.toFixed(4)}`, 20, yPos)
+      doc.text(`${candidate.rank}. ${candidate.name} - ${Math.round(candidate.utilityScore * 1000) / 1000}`, 20, yPos)
     })
     
     doc.save("hasil-penilaian-smart.pdf")
@@ -80,7 +80,7 @@ export default function DataPenilaianPage() {
     const XLSX = await import("xlsx")
     const wsData = [
       ["Ranking", "Nama Kandidat", "Nilai Utility"],
-      ...calculatedCandidates.map((c) => [c.rank, c.name, c.utilityScore.toFixed(4)]),
+      ...calculatedCandidates.map((c) => [c.rank, c.name, Math.round(c.utilityScore * 1000) / 1000]),
     ]
     const ws = XLSX.utils.aoa_to_sheet(wsData)
     const wb = XLSX.utils.book_new()
@@ -368,7 +368,7 @@ export default function DataPenilaianPage() {
                         
                         <div className="text-right shrink-0 ml-2">
                           <div className="text-lg font-bold text-gray-900">
-                            {candidate.utilityScore.toFixed(2)}%
+                            {Math.round(candidate.utilityScore * 1000) / 1000}
                           </div>
                         </div>
                       </div>
@@ -376,7 +376,7 @@ export default function DataPenilaianPage() {
                       {/* Progress Bar */}
                       <div className="mb-3">
                         <Progress 
-                          value={candidate.utilityScore} 
+                          value={candidate.utilityScore * 100} 
                           className="h-2 w-full"
                         />
                       </div>
@@ -462,9 +462,9 @@ export default function DataPenilaianPage() {
                           <td className="px-6 py-4 text-center">
                             <div className="space-y-2">
                               <div className="font-bold text-lg text-gray-900">
-                                {candidate.utilityScore.toFixed(2)}%
+                                {Math.round(candidate.utilityScore * 1000) / 1000}
                               </div>
-                              <Progress value={candidate.utilityScore} className="h-2 w-24 mx-auto" />
+                              <Progress value={candidate.utilityScore * 100} className="h-2 w-24 mx-auto" />
                             </div>
                           </td>
                         </tr>

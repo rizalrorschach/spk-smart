@@ -80,7 +80,7 @@ export default function ResultsTable({ criteria, calculatedCandidates, isCalcula
                       ))}
                       <TableCell className="text-center">
                         <div className="space-y-2">
-                          <div className="font-semibold">{candidate.utilityScore.toFixed(4)}</div>
+                          <div className="font-semibold">{Math.round(candidate.utilityScore * 1000) / 1000}</div>
                           <Progress value={candidate.utilityScore * 100} className="h-2 w-20 mx-auto" />
                         </div>
                       </TableCell>

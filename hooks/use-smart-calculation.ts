@@ -186,6 +186,7 @@ export function useSMARTCalculation() {
       {} as { [key: string]: { min: number; max: number } },
     )
 
+
     // Step 3: Calculate utility scores
     const calculatedResults = candidates.map((candidate) => {
       let utilityScore = 0
