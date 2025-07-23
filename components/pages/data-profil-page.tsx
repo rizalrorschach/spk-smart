@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 export default function DataProfilPage() {
   const [email, setEmail] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [userMetadata, setUserMetadata] = useState<any>(null)
+  const [userMetadata, setUserMetadata] = useState<{ full_name?: string; [key: string]: unknown } | null>(null)
 
   useEffect(() => {
     const getUser = async () => {
@@ -147,10 +147,9 @@ export default function DataProfilPage() {
 }
 
 // Helper component for labels
-function Label({ className, children, ...props }: { 
-  className?: string, 
-  children: React.ReactNode,
-  [key: string]: any 
+function Label({ className, children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement> & {
+  className?: string
+  children: React.ReactNode
 }) {
   return <label className={className} {...props}>{children}</label>
 } 

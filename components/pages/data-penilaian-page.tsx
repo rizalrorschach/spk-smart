@@ -56,7 +56,7 @@ export default function DataPenilaianPage() {
     let yPos = 40
     doc.text("Ranking Kandidat:", 20, yPos)
     
-    calculatedCandidates.forEach((candidate, index) => {
+    calculatedCandidates.forEach((candidate) => {
       yPos += 10
       doc.text(`${candidate.rank}. ${candidate.name} - ${candidate.utilityScore.toFixed(2)}%`, 20, yPos)
     })
