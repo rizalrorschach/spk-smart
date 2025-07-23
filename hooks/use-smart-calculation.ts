@@ -110,7 +110,17 @@ export function useSMARTCalculation() {
   const handleScoreChange = async (candidateId: string, criteriaId: string, value: string) => {
     if (!currentUserId) return
     
-    const score = parseInt(value) || 0
+    // Parse the score more carefully
+    const numValue = parseFloat(value)
+    const score = isNaN(numValue) ? 0 : Math.min(Math.max(Math.round(numValue), 0), 100)
+    
+    // Update local state immediately for better UX
+    setCandidates((prev) =>
+      prev.map((c) =>
+        c.id === candidateId ? { ...c, scores: { ...c.scores, [criteriaId]: score } } : c
+      )
+    )
+    
     try {
       const { error } = await supabase
         .from("scores")
@@ -119,16 +129,18 @@ export function useSMARTCalculation() {
           candidate_id: candidateId,
           criteria_id: criteriaId,
           score: score,
+        }, {
+          onConflict: 'user_id,candidate_id,criteria_id'
         })
       if (error) throw error
-
-      setCandidates((prev) =>
-        prev.map((c) =>
-          c.id === candidateId ? { ...c, scores: { ...c.scores, [criteriaId]: score } } : c
-        )
-      )
     } catch (err) {
       console.error("Error updating score:", err)
+      // Revert local state on error
+      setCandidates((prev) =>
+        prev.map((c) =>
+          c.id === candidateId ? { ...c, scores: { ...c.scores, [criteriaId]: 0 } } : c
+        )
+      )
     }
   }
 

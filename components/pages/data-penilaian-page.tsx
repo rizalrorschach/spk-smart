@@ -27,12 +27,21 @@ export default function DataPenilaianPage() {
   }
 
   const handleBlur = (candidateId: string, criteriaId: string, value: string) => {
-    handleScoreChange(candidateId, criteriaId, value)
-    setEditing((prev) => {
-      const newState = { ...prev }
-      delete newState[`${candidateId}_${criteriaId}`]
-      return newState
-    })
+    const cleanValue = value.trim()
+    
+    // Update the score (handleScoreChange will handle the async operation)
+    if (cleanValue !== "") {
+      handleScoreChange(candidateId, criteriaId, cleanValue)
+    }
+    
+    // Use setTimeout to ensure the score update happens before clearing editing state
+    setTimeout(() => {
+      setEditing((prev) => {
+        const newState = { ...prev }
+        delete newState[`${candidateId}_${criteriaId}`]
+        return newState
+      })
+    }, 100)
   }
 
   const handleCalculate = () => {
@@ -167,7 +176,7 @@ export default function DataPenilaianPage() {
                     value={
                       editing[`${candidate.id}_${criterion.id}`] !== undefined
                         ? editing[`${candidate.id}_${criterion.id}`]
-                        : candidate.scores[criterion.id] || ""
+                        : candidate.scores[criterion.id]?.toString() ?? ""
                     }
                     onChange={(e) => handleInput(candidate.id, criterion.id, e.target.value)}
                     onBlur={(e) => handleBlur(candidate.id, criterion.id, e.target.value)}
@@ -226,7 +235,7 @@ export default function DataPenilaianPage() {
                             value={
                               editing[`${candidate.id}_${c.id}`] !== undefined
                                 ? editing[`${candidate.id}_${c.id}`]
-                                : candidate.scores[c.id] || ""
+                                : candidate.scores[c.id]?.toString() ?? ""
                             }
                             onChange={(e) => handleInput(candidate.id, c.id, e.target.value)}
                             onBlur={(e) => handleBlur(candidate.id, c.id, e.target.value)}

@@ -55,7 +55,7 @@ export default function CandidateScoreCard({ candidates, criteria, onScoreChange
                       type="number"
                       min="0"
                       max="100"
-                      value={candidate.scores[criterion.id]}
+                      value={candidate.scores[criterion.id]?.toString() ?? ""}
                       onChange={(e) => onScoreChange(candidate.id, criterion.id, e.target.value)}
                       className="border-slate-300"
                       placeholder="0-100"
