@@ -159,7 +159,7 @@ export default function SMARTCalculationPage() {
     doc.text("Ranking | Nama Kandidat | Nilai Utility", 14, y)
     y += 8
     calculatedCandidates.forEach((c) => {
-      doc.text(`#${c.rank}    | ${c.name}    | ${c.utilityScore.toFixed(2)}%`, 14, y)
+      doc.text(`#${c.rank}    | ${c.name}    | ${c.utilityScore.toFixed(4)}`, 14, y)
       y += 8
     })
     doc.save("hasil-perhitungan-smart.pdf")
@@ -349,7 +349,7 @@ export default function SMARTCalculationPage() {
                           <tr key={r.candidate_id} className={r.rank === 1 ? "bg-green-50" : ""}>
                             <td className="px-2 py-1">#{r.rank}</td>
                             <td className="px-2 py-1">{candidate ? candidate.name : r.candidate_id}</td>
-                            <td className="px-2 py-1">{Number(r.utility_score).toFixed(2)}%</td>
+                            <td className="px-2 py-1">{Number(r.utility_score).toFixed(4)}</td>
                           </tr>
                         )
                       })}

@@ -107,7 +107,7 @@ export default function DataHasilAkhirPage() {
                             })()}
                           </p>
                           <p className="text-sm text-green-600">
-                            Skor: {Number(sorted.find(r => r.rank === 1)?.utility_score).toFixed(2)}%
+                            Skor: {Number(sorted.find(r => r.rank === 1)?.utility_score).toFixed(4)}
                           </p>
                         </div>
                       </div>
@@ -144,7 +144,7 @@ export default function DataHasilAkhirPage() {
                                 {r.rank === 1 && <Trophy className="w-4 h-4 text-yellow-600" />}
                               </div>
                               <div className="text-lg font-bold text-gray-900">
-                                {Number(r.utility_score).toFixed(2)}%
+                                {Number(r.utility_score).toFixed(4)}
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -207,7 +207,7 @@ export default function DataHasilAkhirPage() {
                                   </td>
                                   <td className="px-4 py-3 text-center">
                                     <div className="font-semibold text-lg text-gray-900">
-                                      {Number(r.utility_score).toFixed(2)}%
+                                      {Number(r.utility_score).toFixed(4)}
                                     </div>
                                   </td>
                                 </tr>

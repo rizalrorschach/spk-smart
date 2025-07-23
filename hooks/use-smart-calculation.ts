@@ -204,14 +204,14 @@ export function useSMARTCalculation() {
           }
         }
 
-        // Apply weight
-        utilityScore += normalizedScore * normalizedWeights[criterion.id]
-      })
+              // Apply weight
+      utilityScore += normalizedScore * normalizedWeights[criterion.id]
+    })
 
-      return {
-        ...candidate,
-        utilityScore: utilityScore * 100, // Convert to percentage
-      }
+    return {
+      ...candidate,
+      utilityScore: utilityScore, // Keep as decimal (0-1 range)
+    }
     })
 
     // Step 4: Rank candidates

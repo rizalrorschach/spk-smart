@@ -68,7 +68,7 @@ export function SMARTCalculator({ criteria, candidates, onCalculationComplete }:
 
       return {
         ...candidate,
-        utilityScore: utilityScore * 100,
+        utilityScore: utilityScore,
         normalizedWeights,
         minMaxValues,
       }

@@ -67,7 +67,7 @@ export default function DataPenilaianPage() {
     
     calculatedCandidates.forEach((candidate) => {
       yPos += 10
-      doc.text(`${candidate.rank}. ${candidate.name} - ${candidate.utilityScore.toFixed(2)}%`, 20, yPos)
+      doc.text(`${candidate.rank}. ${candidate.name} - ${candidate.utilityScore.toFixed(4)}`, 20, yPos)
     })
     
     doc.save("hasil-penilaian-smart.pdf")
@@ -80,7 +80,7 @@ export default function DataPenilaianPage() {
     const XLSX = await import("xlsx")
     const wsData = [
       ["Ranking", "Nama Kandidat", "Nilai Utility"],
-      ...calculatedCandidates.map((c) => [c.rank, c.name, c.utilityScore.toFixed(2)]),
+      ...calculatedCandidates.map((c) => [c.rank, c.name, c.utilityScore.toFixed(4)]),
     ]
     const ws = XLSX.utils.aoa_to_sheet(wsData)
     const wb = XLSX.utils.book_new()
