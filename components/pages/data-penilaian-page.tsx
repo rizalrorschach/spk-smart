@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Select, SelectOption } from "@/components/ui/select"
 import { ClipboardList, Calculator, CheckCircle2, Trophy, Save, Download, FileSpreadsheet } from "lucide-react"
 
 export default function DataPenilaianPage() {
@@ -21,6 +22,14 @@ export default function DataPenilaianPage() {
 
   const [editing, setEditing] = useState<{ [key: string]: string }>({})
   const [showSuccess, setShowSuccess] = useState(false)
+
+  // Pendidikan terakhir options
+  const pendidikanOptions: SelectOption[] = [
+    { value: "5", label: "S1" },
+    { value: "4", label: "D3" },
+    { value: "3", label: "SMK/SMA" },
+    { value: "2", label: "SMP/MTS" },
+  ]
 
   const handleInput = (candidateId: string, criteriaId: string, value: string) => {
     setEditing((prev) => ({ ...prev, [`${candidateId}_${criteriaId}`]: value }))
@@ -42,6 +51,13 @@ export default function DataPenilaianPage() {
         return newState
       })
     }, 100)
+  }
+
+  const handleSelectChange = (candidateId: string, criteriaId: string, value: string) => {
+    // For select components, update immediately without editing state
+    if (value !== "") {
+      handleScoreChange(candidateId, criteriaId, value)
+    }
   }
 
   const handleCalculate = () => {
@@ -126,7 +142,7 @@ export default function DataPenilaianPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Data Penilaian</h1>
-            <p className="text-sm text-gray-600 mt-1">Berikan nilai untuk setiap kandidat dan kriteria (0-100)</p>
+            <p className="text-sm text-gray-600 mt-1">Berikan nilai untuk setiap kandidat dan kriteria (0-100). Untuk Pendidikan Terakhir, gunakan dropdown.</p>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -169,20 +185,30 @@ export default function DataPenilaianPage() {
                       {criterion.type === 'benefit' ? 'Benefit' : 'Cost'}
                     </span>
                   </div>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={
-                      editing[`${candidate.id}_${criterion.id}`] !== undefined
-                        ? editing[`${candidate.id}_${criterion.id}`]
-                        : candidate.scores[criterion.id]?.toString() ?? ""
-                    }
-                    onChange={(e) => handleInput(candidate.id, criterion.id, e.target.value)}
-                    onBlur={(e) => handleBlur(candidate.id, criterion.id, e.target.value)}
-                    placeholder="0-100"
-                    className="text-center"
-                  />
+                  {criterion.name.toLowerCase().includes('pendidikan') ? (
+                    <Select
+                      value={candidate.scores[criterion.id]?.toString() ?? ""}
+                      onValueChange={(value) => handleSelectChange(candidate.id, criterion.id, value)}
+                      options={pendidikanOptions}
+                      placeholder="Pilih pendidikan"
+                      className="text-center"
+                    />
+                  ) : (
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={
+                        editing[`${candidate.id}_${criterion.id}`] !== undefined
+                          ? editing[`${candidate.id}_${criterion.id}`]
+                          : candidate.scores[criterion.id]?.toString() ?? ""
+                      }
+                      onChange={(e) => handleInput(candidate.id, criterion.id, e.target.value)}
+                      onBlur={(e) => handleBlur(candidate.id, criterion.id, e.target.value)}
+                      placeholder="0-100"
+                      className="text-center"
+                    />
+                  )}
                 </div>
               ))}
             </CardContent>
@@ -227,20 +253,30 @@ export default function DataPenilaianPage() {
                       </td>
                       {criteria.map((c) => (
                         <td key={c.id} className="px-4 py-4 text-center">
-                          <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            className="w-20 text-center mx-auto"
-                            value={
-                              editing[`${candidate.id}_${c.id}`] !== undefined
-                                ? editing[`${candidate.id}_${c.id}`]
-                                : candidate.scores[c.id]?.toString() ?? ""
-                            }
-                            onChange={(e) => handleInput(candidate.id, c.id, e.target.value)}
-                            onBlur={(e) => handleBlur(candidate.id, c.id, e.target.value)}
-                            placeholder="0-100"
-                          />
+                          {c.name.toLowerCase().includes('pendidikan') ? (
+                            <Select
+                              value={candidate.scores[c.id]?.toString() ?? ""}
+                              onValueChange={(value) => handleSelectChange(candidate.id, c.id, value)}
+                              options={pendidikanOptions}
+                              placeholder="Pilih"
+                              className="w-24 text-center mx-auto"
+                            />
+                          ) : (
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              className="w-20 text-center mx-auto"
+                              value={
+                                editing[`${candidate.id}_${c.id}`] !== undefined
+                                  ? editing[`${candidate.id}_${c.id}`]
+                                  : candidate.scores[c.id]?.toString() ?? ""
+                              }
+                              onChange={(e) => handleInput(candidate.id, c.id, e.target.value)}
+                              onBlur={(e) => handleBlur(candidate.id, c.id, e.target.value)}
+                              placeholder="0-100"
+                            />
+                          )}
                         </td>
                       ))}
                     </tr>
